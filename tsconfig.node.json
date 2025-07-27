@@ -6,14 +6,8 @@
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "strict": false,
-    "noEmit": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": false
+    "strict": true,
+    "noEmit": true
   },
-  "include": ["vite.config.ts", "postcss.config.js", "tailwind.config.ts"]
+  "include": ["vite.config.ts"]
 }
