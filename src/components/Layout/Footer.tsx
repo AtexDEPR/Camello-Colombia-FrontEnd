@@ -3,7 +3,7 @@ import { CamelloLogo } from "@/components/ui/camello-logo"
 
 /**
  * Componente Footer - Pie de página de Camello
- * 
+ *
  * Este componente proporciona información de contacto, enlaces útiles
  * y detalles legales en el pie de página de la aplicación.
  * 
@@ -50,17 +50,17 @@ export function Footer() {
               </div>
               <span className="text-xl font-bold text-primary">Camello</span>
             </div>
-            
+
             {/* Descripción de la empresa */}
             <p className="text-muted-foreground text-sm leading-relaxed">
               La primera plataforma freelance 100% colombiana. Conecta tu talento 
               con oportunidades reales, cobra en pesos, trabaja desde cualquier lugar.
             </p>
-            
+
             {/* Información de contacto */}
             <div className="space-y-2">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <MapPin className="mr-2 h-4 w-4" />
+            <div className="flex items-center text-sm text-muted-foreground">
+              <MapPin className="mr-2 h-4 w-4" />
                 <span>Bogotá, Colombia</span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">

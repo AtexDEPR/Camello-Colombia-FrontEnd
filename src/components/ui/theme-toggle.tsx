@@ -19,7 +19,7 @@ type Tema = "light" | "dark" | "night"
  * 
  * Este componente permite a los usuarios cambiar entre diferentes temas visuales.
  * Utiliza React Hooks para manejar el estado y persistir la preferencia del usuario.
- * 
+ *
  * Funcionalidades:
  * - Cicla entre 3 temas: claro → oscuro → noche → claro
  * - Persiste la preferencia en localStorage
@@ -32,7 +32,7 @@ type Tema = "light" | "dark" | "night"
  * - useState: Hook para manejar estado local
  * - useEffect: Hook para efectos secundarios
  * - Funciones helper para lógica reutilizable
- * 
+ *
  * Uso:
  * <ThemeToggle />
  * 
@@ -77,7 +77,7 @@ export function ThemeToggle() {
    * 
    * Esta función modifica las clases CSS del elemento raíz del documento
    * para cambiar los estilos globales de la aplicación.
-   * 
+   *
    * @param nuevoTema - El tema a aplicar (tipo Tema)
    */
   const aplicarTema = (nuevoTema: Tema) => {

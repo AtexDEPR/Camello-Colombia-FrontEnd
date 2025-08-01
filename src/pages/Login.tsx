@@ -13,7 +13,7 @@ import { Link } from "react-router-dom"
 
 /**
  * Página de Inicio de Sesión - Autenticación de usuarios en Camello
- * 
+ *
  * Esta página permite a los usuarios iniciar sesión en la plataforma.
  * Utiliza React Hooks para manejar el estado del formulario.
  * 
@@ -43,12 +43,12 @@ export default function PaginaInicioSesion() {
 
   /**
    * Manejador del envío del formulario
-   * 
+   *
    * Esta función se ejecuta cuando el usuario envía el formulario.
    * Previene el comportamiento por defecto del navegador y procesa los datos.
    * 
    * @param evento - Evento del formulario (tipo React.FormEvent)
-   * 
+   *
    * TODO: Implementar lógica real de autenticación
    * - Validar datos del formulario
    * - Enviar petición al backend

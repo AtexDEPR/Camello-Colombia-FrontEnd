@@ -14,10 +14,10 @@ import { Link } from "react-router-dom"
 
 /**
  * Página de Registro - Crear cuenta en Camello
- * 
+ *
  * Esta página permite a los usuarios registrarse como freelancer o contratante.
  * Utiliza React Hooks y componentes de UI para crear un formulario interactivo.
- * 
+ *
  * Conceptos de TypeScript utilizados:
  * - useState: Hook para manejar estado local
  * - Union Types: "freelancer" | "contractor"
@@ -57,12 +57,12 @@ export default function PaginaRegistro() {
 
   /**
    * Manejador del envío del formulario de registro
-   * 
+   *
    * Esta función se ejecuta cuando el usuario envía el formulario.
    * Incluye validación básica de contraseñas y prepara los datos para el backend.
    * 
    * @param evento - Evento del formulario (tipo React.FormEvent)
-   * 
+   *
    * TODO: Implementar lógica completa de registro
    * - Validar que las contraseñas coincidan
    * - Validar formato de email

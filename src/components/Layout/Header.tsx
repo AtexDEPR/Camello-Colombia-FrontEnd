@@ -8,7 +8,7 @@ import { User, Briefcase, Search, Bell } from "lucide-react"
  * 
  * Este componente proporciona la navegación principal de la aplicación.
  * Incluye el logo, enlaces de navegación, botones de acción y el alternador de temas.
- * 
+ *
  * Características principales:
  * - Logo de Camello con enlace al inicio
  * - Navegación principal (Explorar, Trabajos)
@@ -17,7 +17,7 @@ import { User, Briefcase, Search, Bell } from "lucide-react"
  * - Botones de autenticación (Ingresar/Registrarse)
  * - Diseño sticky que permanece visible al hacer scroll
  * - Backdrop blur para efecto moderno
- * 
+ *
  * Responsive:
  * - Navegación oculta en móviles (se puede expandir con menú hamburguesa)
  * - Botones adaptados para diferentes tamaños de pantalla
