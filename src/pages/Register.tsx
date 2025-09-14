@@ -2,15 +2,19 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useNavigate, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
 import { CamelloLogo } from "@/components/ui/camello-logo"
-import { Mail, Lock, User, ArrowLeft, Briefcase, Users } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Mail, Lock, User, ArrowLeft, Briefcase, Users, Eye, EyeOff, Loader2 } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { UserRole } from "@/types/api"
+import { toast } from "@/hooks/use-toast"
 
 /**
  * Página de Registro - Crear cuenta en Camello
@@ -28,69 +32,134 @@ import { Link } from "react-router-dom"
  * @version 1.0.0
  */
 export default function PaginaRegistro() {
-  /**
-   * Estado para el tipo de usuario seleccionado
-   * 
-   * Union Type en TypeScript: "freelancer" | "contractor"
-   * Esto significa que userType solo puede tener uno de estos dos valores.
-   * 
-   * useState<"freelancer" | "contractor">: Especifica el tipo exacto del estado
-   */
-  const [tipoUsuario, establecerTipoUsuario] = useState<"freelancer" | "contractor">("freelancer")
+  const navigate = useNavigate()
+  const { register, isAuthenticated, isLoading, error, clearError } = useAuth()
+  
+  // Obtener parámetros de URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const roleFromUrl = urlParams.get('role') as "freelancer" | "contractor" | null;
 
-  /**
-   * Estado del formulario de registro
-   * 
-   * Objeto tipado que define la estructura exacta de los datos del formulario.
-   * Cada propiedad tiene un tipo específico (string).
-   * 
-   * Tipos de TypeScript:
-   * - { name: string, email: string, ... }: Define la estructura del objeto
-   * - useState<...>: Especifica el tipo del estado
-   */
+  const [tipoUsuario, establecerTipoUsuario] = useState<"freelancer" | "contractor">(
+    roleFromUrl || "freelancer"
+  )
   const [datosFormulario, establecerDatosFormulario] = useState({
-    nombre: "",
     email: "",
-    contraseña: "",
-    confirmarContraseña: "",
+    password: "",
+    confirmPassword: "",
   })
 
-  /**
-   * Manejador del envío del formulario de registro
-   *
-   * Esta función se ejecuta cuando el usuario envía el formulario.
-   * Incluye validación básica de contraseñas y prepara los datos para el backend.
-   * 
-   * @param evento - Evento del formulario (tipo React.FormEvent)
-   *
-   * TODO: Implementar lógica completa de registro
-   * - Validar que las contraseñas coincidan
-   * - Validar formato de email
-   * - Validar fortaleza de contraseña
-   * - Enviar datos al backend
-   * - Manejar respuestas de error
-   * - Redirigir a onboarding específico por tipo de usuario
-   */
-  const manejarEnvio = (evento: React.FormEvent) => {
-    // Prevenir el comportamiento por defecto del formulario
-    evento.preventDefault()
+  const [mostrarPassword, setMostrarPassword] = useState(false)
+  const [mostrarConfirmPassword, setMostrarConfirmPassword] = useState(false)
+  const [aceptaTerminos, setAceptaTerminos] = useState(false)
+  const [enviando, setEnviando] = useState(false)
 
-    // Validación básica de contraseñas
-    if (datosFormulario.contraseña !== datosFormulario.confirmarContraseña) {
-      alert("Las contraseñas no coinciden")
+  /**
+   * Redirigir si ya está autenticado
+   */
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
+    }
+  }, [isAuthenticated, navigate])
+
+  /**
+   * Limpiar errores cuando el usuario empiece a escribir
+   */
+  useEffect(() => {
+    if (error) {
+      clearError()
+    }
+  }, [datosFormulario.email, datosFormulario.password])
+
+  /**
+   * Validaciones del formulario
+   */
+  const validarFormulario = () => {
+    if (!datosFormulario.email || !datosFormulario.password || !datosFormulario.confirmPassword) {
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor completa todos los campos",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    if (!datosFormulario.email.includes('@')) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor ingresa un email válido",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    if (datosFormulario.password.length < 6) {
+      toast({
+        title: "Contraseña muy corta",
+        description: "La contraseña debe tener al menos 6 caracteres",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    if (datosFormulario.password !== datosFormulario.confirmPassword) {
+      toast({
+        title: "Contraseñas no coinciden",
+        description: "Las contraseñas ingresadas no son iguales",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    if (!aceptaTerminos) {
+      toast({
+        title: "Términos y condiciones",
+        description: "Debes aceptar los términos y condiciones",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    return true
+  }
+
+  /**
+   * Manejador del envío del formulario
+   */
+  const manejarEnvio = async (evento: React.FormEvent) => {
+    evento.preventDefault()
+    
+    if (!validarFormulario()) {
       return
     }
 
-    // Placeholder - reemplazar con lógica real
-    console.log("Intento de registro:", { ...datosFormulario, tipoUsuario })
+    try {
+      setEnviando(true)
+      await register({
+        email: datosFormulario.email,
+        password: datosFormulario.password,
+        confirmPassword: datosFormulario.confirmPassword,
+        role: tipoUsuario === "freelancer" ? UserRole.FREELANCER : UserRole.CONTRACTOR,
+        acceptTerms: aceptaTerminos,
+      })
+      
+      // El redirect se maneja en el useEffect
+    } catch (error) {
+      // El error se maneja en el AuthContext
+      console.error('Error en registro:', error)
+    } finally {
+      setEnviando(false)
+    }
+  }
 
-    // Aquí iría la lógica de registro:
-    // 1. Validar todos los campos
-    // 2. Enviar petición POST a /api/auth/register
-    // 3. Manejar respuesta del servidor
-    // 4. Redirigir según el tipo de usuario:
-    //    - Freelancer: a completar perfil profesional
-    //    - Contratante: a configuración de empresa
+  /**
+   * Manejar cambios en los inputs
+   */
+  const manejarCambio = (campo: string) => (evento: React.ChangeEvent<HTMLInputElement>) => {
+    establecerDatosFormulario(prev => ({
+      ...prev,
+      [campo]: evento.target.value
+    }))
   }
 
   return (
@@ -164,26 +233,6 @@ export default function PaginaRegistro() {
                 </RadioGroup>
               </div>
 
-              {/* Campo de nombre completo */}
-              <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre completo</Label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="nombre"
-                    type="text"
-                    placeholder="Tu nombre completo"
-                    className="pl-10"
-                    value={datosFormulario.nombre}
-                    onChange={(e) => establecerDatosFormulario({ 
-                      ...datosFormulario, 
-                      nombre: e.target.value 
-                    })}
-                    required
-                  />
-                </div>
-              </div>
-
               {/* Campo de correo electrónico */}
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
@@ -195,10 +244,8 @@ export default function PaginaRegistro() {
                     placeholder="tu@email.com"
                     className="pl-10"
                     value={datosFormulario.email}
-                    onChange={(e) => establecerDatosFormulario({ 
-                      ...datosFormulario, 
-                      email: e.target.value 
-                    })}
+                    onChange={manejarCambio('email')}
+                    disabled={enviando || isLoading}
                     required
                   />
                 </div>
@@ -206,47 +253,98 @@ export default function PaginaRegistro() {
 
               {/* Campo de contraseña */}
               <div className="space-y-2">
-                <Label htmlFor="contraseña">Contraseña</Label>
+                <Label htmlFor="password">Contraseña</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="contraseña"
-                    type="password"
+                    id="password"
+                    type={mostrarPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10"
-                    value={datosFormulario.contraseña}
-                    onChange={(e) => establecerDatosFormulario({ 
-                      ...datosFormulario, 
-                      contraseña: e.target.value 
-                    })}
+                    className="pl-10 pr-10"
+                    value={datosFormulario.password}
+                    onChange={manejarCambio('password')}
+                    disabled={enviando || isLoading}
                     required
                   />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
+                    onClick={() => setMostrarPassword(!mostrarPassword)}
+                  >
+                    {mostrarPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Mínimo 6 caracteres
+                </p>
               </div>
 
               {/* Campo de confirmación de contraseña */}
               <div className="space-y-2">
-                <Label htmlFor="confirmarContraseña">Confirmar contraseña</Label>
+                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="confirmarContraseña"
-                    type="password"
+                    id="confirmPassword"
+                    type={mostrarConfirmPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10"
-                    value={datosFormulario.confirmarContraseña}
-                    onChange={(e) => establecerDatosFormulario({ 
-                      ...datosFormulario, 
-                      confirmarContraseña: e.target.value 
-                    })}
+                    className="pl-10 pr-10"
+                    value={datosFormulario.confirmPassword}
+                    onChange={manejarCambio('confirmPassword')}
+                    disabled={enviando || isLoading}
                     required
                   />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
+                    onClick={() => setMostrarConfirmPassword(!mostrarConfirmPassword)}
+                  >
+                    {mostrarConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
+              {/* Términos y condiciones */}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="terms" 
+                  checked={aceptaTerminos}
+                  onCheckedChange={setAceptaTerminos}
+                  disabled={enviando || isLoading}
+                />
+                <Label htmlFor="terms" className="text-sm">
+                  Acepto los{" "}
+                  <Link to="/terms" className="text-primary hover:underline">
+                    términos y condiciones
+                  </Link>{" "}
+                  y la{" "}
+                  <Link to="/privacy" className="text-primary hover:underline">
+                    política de privacidad
+                  </Link>
+                </Label>
+              </div>
+
+              {/* Mostrar error si existe */}
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error}
+                </div>
+              )}
+
               {/* Botón de registro */}
-              <Button type="submit" className="w-full">
-                Crear Cuenta
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={enviando || isLoading}
+              >
+                {enviando || isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creando cuenta...
+                  </>
+                ) : (
+                  'Crear Cuenta'
+                )}
               </Button>
             </form>
 

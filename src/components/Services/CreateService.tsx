@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,22 +7,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Upload, DollarSign, Clock } from "lucide-react";
+import { useCreateService } from "@/hooks/useServices";
+import { toast } from "@/hooks/use-toast";
+import { X, Plus, Upload, DollarSign, Clock, Loader2 } from "lucide-react";
 
 const categories = [
-  "Diseño Gráfico",
-  "Desarrollo Web",
-  "Marketing Digital",
-  "Redacción y Traducción",
-  "Video y Animación",
-  "Música y Audio",
-  "Programación",
-  "Consultoría",
-  "Fotografía",
-  "Community Manager"
+  { value: "design", label: "Diseño Gráfico" },
+  { value: "development", label: "Desarrollo Web" },
+  { value: "marketing", label: "Marketing Digital" },
+  { value: "writing", label: "Redacción y Traducción" },
+  { value: "video", label: "Video y Animación" },
+  { value: "audio", label: "Música y Audio" },
+  { value: "programming", label: "Programación" },
+  { value: "consulting", label: "Consultoría" },
+  { value: "photography", label: "Fotografía" },
+  { value: "social-media", label: "Community Manager" }
 ];
 
 export function CreateService() {
+  const navigate = useNavigate();
+  const createServiceMutation = useCreateService();
+  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -42,18 +48,49 @@ export function CreateService() {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí iría la lógica para enviar el servicio
-    console.log({
-      title,
-      description,
-      category,
-      price,
-      deliveryTime,
-      tags,
-      images
-    });
+    
+    // Validaciones
+    if (!title || !description || !category || !price || !deliveryTime) {
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor completa todos los campos obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const priceNumber = parseFloat(price);
+    if (isNaN(priceNumber) || priceNumber <= 0) {
+      toast({
+        title: "Precio inválido",
+        description: "Por favor ingresa un precio válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await createServiceMutation.mutateAsync({
+        title,
+        description,
+        category,
+        price: priceNumber,
+        deliveryTime,
+        tags,
+        imageUrl: images[0] || null,
+      });
+
+      toast({
+        title: "Servicio creado",
+        description: "Tu servicio ha sido publicado exitosamente",
+      });
+
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error creating service:', error);
+    }
   };
 
   return (
@@ -89,7 +126,7 @@ export function CreateService() {
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -203,11 +240,22 @@ export function CreateService() {
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">
-            Guardar Borrador
+          <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
+            Cancelar
           </Button>
-          <Button type="submit" className="bg-gradient-primary hover:opacity-90">
-            Publicar Servicio
+          <Button 
+            type="submit" 
+            className="bg-gradient-primary hover:opacity-90"
+            disabled={createServiceMutation.isPending}
+          >
+            {createServiceMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Publicando...
+              </>
+            ) : (
+              'Publicar Servicio'
+            )}
           </Button>
         </div>
       </form>

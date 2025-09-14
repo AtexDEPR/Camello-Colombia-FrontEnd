@@ -1,7 +1,8 @@
 import { Header } from "@/components/Layout/Header";
 import { FreelancerDashboard } from "@/components/Dashboard/FreelancerDashboard";
 import { ContractorDashboard } from "@/components/Dashboard/ContractorDashboard";
-import { useState } from "react";
+import { useAuth, useRole } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Página Principal del Dashboard - Panel de control de usuarios
@@ -18,41 +19,45 @@ import { useState } from "react";
  * @version 1.0.0
  */
 export default function PaginaDashboard() {
-  /**
-   * Estado para el tipo de usuario actual
-   * 
-   * TODO: Obtener el tipo de usuario desde el contexto de autenticación
-   * Por ahora está hardcodeado como "freelancer" para demostración.
-   * 
-   * Union Type en TypeScript: "freelancer" | "contractor"
-   * Esto significa que tipoUsuario solo puede tener uno de estos dos valores.
-   */
-  const [tipoUsuario] = useState<"freelancer" | "contractor">("freelancer");
+  const { user, isLoading } = useAuth();
+  const { isFreelancer, isContractor } = useRole();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-64" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-32" />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Skeleton className="h-96" />
+              <Skeleton className="h-96" />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* 
-        Header: Componente de navegación superior
-        Se mantiene fijo en todas las páginas del dashboard
-      */}
       <Header />
-      
-      {/* 
-        Contenido principal del dashboard
-        container: Centra el contenido y establece un ancho máximo
-        mx-auto: Margen automático horizontal para centrar
-        px-4: Padding horizontal de 1rem (16px)
-        py-8: Padding vertical de 2rem (32px)
-      */}
       <main className="container mx-auto px-4 py-8">
-        {/* 
-          Renderizado condicional basado en el tipo de usuario
-          Si tipoUsuario es "freelancer", muestra FreelancerDashboard
-          Si tipoUsuario es "contractor", muestra ContractorDashboard
-          
-          Sintaxis: {condicion ? valorSiVerdadero : valorSiFalso}
-        */}
-        {tipoUsuario === "freelancer" ? <FreelancerDashboard /> : <ContractorDashboard />}
+        {isFreelancer && <FreelancerDashboard />}
+        {isContractor && <ContractorDashboard />}
+        {!isFreelancer && !isContractor && (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold mb-4">Completa tu perfil</h2>
+            <p className="text-muted-foreground mb-6">
+              Para acceder al dashboard, necesitas completar tu perfil.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );

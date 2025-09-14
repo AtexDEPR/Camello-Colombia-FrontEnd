@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Link } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 import { ArrowRight, Users, Briefcase } from "lucide-react"
 
 /**
@@ -22,6 +24,8 @@ import { ArrowRight, Users, Briefcase } from "lucide-react"
  * - Efectos decorativos de fondo con círculos difuminados
  */
 export function CTASection() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <section className="py-20 bg-gradient-primary relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -59,10 +63,13 @@ export function CTASection() {
                 size="lg"
                 variant="secondary"
                 className="bg-white text-primary hover:bg-white/90 shadow-camello-lg"
+                asChild
               >
-                <Users className="mr-2 h-5 w-5" />
-                Soy Freelancer
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <Link to={isAuthenticated ? "/dashboard" : "/register?role=freelancer"}>
+                  <Users className="mr-2 h-5 w-5" />
+                  {isAuthenticated ? "Mi Dashboard" : "Soy Freelancer"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
             </motion.div>
 
@@ -72,10 +79,13 @@ export function CTASection() {
                 size="lg"
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-primary bg-transparent"
+                asChild
               >
-                <Briefcase className="mr-2 h-5 w-5" />
-                Necesito talento
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <Link to={isAuthenticated ? "/explore" : "/register?role=contractor"}>
+                  <Briefcase className="mr-2 h-5 w-5" />
+                  {isAuthenticated ? "Explorar Servicios" : "Necesito talento"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
             </motion.div>
           </motion.div>

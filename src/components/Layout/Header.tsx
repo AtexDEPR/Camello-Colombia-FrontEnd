@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { CamelloLogo } from "@/components/ui/camello-logo"
-import { User, Briefcase, Search, Bell } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { User, Briefcase, Search, Bell, LogOut, Settings, MessageSquare, FileText } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth, useRole } from "@/contexts/AuthContext"
 
 /**
  * Componente Header - Barra de navegación principal de Camello
@@ -27,6 +31,25 @@ import { User, Briefcase, Search, Bell } from "lucide-react"
  * @version 1.0.0
  */
 export function Header() {
+  const { isAuthenticated, user, logout } = useAuth()
+  const { isFreelancer, isContractor, isAdmin } = useRole()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  const getUserInitials = () => {
+    if (!user) return 'U'
+    return user.email.charAt(0).toUpperCase()
+  }
+
+  const getUserDisplayName = () => {
+    if (!user) return 'Usuario'
+    return user.email.split('@')[0]
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
       {/* 
@@ -44,97 +67,143 @@ export function Header() {
         */}
         <div className="flex h-16 items-center justify-between">
           {/* Logo de Camello */}
-          <div className="flex items-center space-x-2">
-            {/* 
-              Contenedor del logo con gradiente
-              h-8 w-8: Dimensiones de 2rem x 2rem (32px x 32px)
-              bg-gradient-primary: Fondo con gradiente personalizado
-              rounded-lg: Bordes redondeados
-            */}
+          <Link to="/" className="flex items-center space-x-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
               <CamelloLogo className="h-4 w-4 text-primary-foreground" />
             </div>
-            {/* 
-              Nombre de la marca
-              hidden sm:block: Oculta en móviles, muestra en pantallas pequeñas y mayores
-              text-xl: Tamaño de texto extra large
-              font-bold: Peso de fuente bold
-              text-primary: Color primario de la marca
-            */}
             <span className="hidden sm:block text-xl font-bold text-primary">Camello</span>
-          </div>
+          </Link>
 
-          {/* 
-            Navegación principal - Oculta en móviles
-            hidden md:flex: Oculta en móviles, muestra en pantallas medianas y mayores
-            items-center: Centra verticalmente los elementos
-            space-x-6: Espaciado horizontal de 1.5rem (24px) entre elementos
-          */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {/* Enlace a Explorar */}
-            <Button variant="ghost" className="text-sm font-medium" asChild>
-              <a href="/explore">
-                <Search className="mr-2 h-4 w-4" />
-                Explorar
-              </a>
-            </Button>
+          {/* Navegación principal */}
+          {isAuthenticated && (
+            <nav className="hidden md:flex items-center space-x-6">
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/explore">
+                  <Search className="mr-2 h-4 w-4" />
+                  Explorar
+                </Link>
+              </Button>
 
-            {/* Enlace a Trabajos */}
-            <Button variant="ghost" className="text-sm font-medium" asChild>
-              <a href="/jobs">
-                <Briefcase className="mr-2 h-4 w-4" />
-                Trabajos
-              </a>
-            </Button>
-          </nav>
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/jobs">
+                  <Briefcase className="mr-2 h-4 w-4" />
+                  Trabajos
+                </Link>
+              </Button>
 
-          {/* 
-            Acciones del usuario
-            flex: Contenedor flex para organizar los botones
-            items-center: Centra verticalmente los elementos
-            space-x-1 sm:space-x-2: Espaciado horizontal responsivo
-          */}
+              {isContractor && (
+                <Button variant="ghost" className="text-sm font-medium" asChild>
+                  <Link to="/jobs/create">
+                    Publicar Trabajo
+                  </Link>
+                </Button>
+              )}
+            </nav>
+          )}
+
+          {/* Acciones del usuario */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            {/* 
-              Botón de notificaciones
-              hidden sm:flex: Oculta en móviles, muestra en pantallas pequeñas y mayores
-              variant="ghost": Variante de botón sin fondo
-              size="sm": Tamaño pequeño
-            */}
-            <Button variant="ghost" size="sm" className="hidden sm:flex">
-              <Bell className="h-4 w-4" />
-            </Button>
-
-            {/* 
-              Alternador de temas
-              Componente personalizado que maneja el cambio entre temas
-            */}
             <ThemeToggle />
 
-            {/* 
-              Botón de inicio de sesión
-              hidden sm:flex: Oculta en móviles, muestra en pantallas pequeñas y mayores
-              variant="outline": Variante de botón con borde
-              size="sm": Tamaño pequeño
-              asChild: Permite que el botón se comporte como un enlace
-            */}
-            <Button variant="outline" size="sm" asChild className="hidden sm:flex">
-              <a href="/login">
-                <User className="mr-2 h-4 w-4" />
-                Ingresar
-              </a>
-            </Button>
+            {isAuthenticated ? (
+              <>
+                {/* Notificaciones */}
+                <Button variant="ghost" size="sm" className="hidden sm:flex" asChild>
+                  <Link to="/notifications">
+                    <Bell className="h-4 w-4" />
+                  </Link>
+                </Button>
 
-            {/* 
-              Botón de registro con gradiente
-              size="sm": Tamaño pequeño
-              bg-gradient-primary: Fondo con gradiente personalizado
-              hover:opacity-90: Efecto hover con opacidad
-              asChild: Permite que el botón se comporte como un enlace
-            */}
-            <Button size="sm" className="bg-gradient-primary hover:opacity-90" asChild>
-              <a href="/register">Registrarse</a>
-            </Button>
+                {/* Mensajes */}
+                <Button variant="ghost" size="sm" className="hidden sm:flex" asChild>
+                  <Link to="/messages">
+                    <MessageSquare className="h-4 w-4" />
+                  </Link>
+                </Button>
+
+                {/* Menú de usuario */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="" alt={getUserDisplayName()} />
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {isFreelancer && 'Freelancer'}
+                          {isContractor && 'Contratante'}
+                          {isAdmin && 'Administrador'}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard">
+                        <User className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile/edit">
+                        <User className="mr-2 h-4 w-4" />
+                        Mi Perfil
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/contracts">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Contratos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Configuración
+                      </Link>
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin">
+                            <Settings className="mr-2 h-4 w-4" />
+                            Panel Admin
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Cerrar Sesión
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                {/* Botones para usuarios no autenticados */}
+                <Button variant="outline" size="sm" asChild className="hidden sm:flex">
+                  <Link to="/login">
+                    <User className="mr-2 h-4 w-4" />
+                    Ingresar
+                  </Link>
+                </Button>
+
+                <Button size="sm" className="bg-gradient-primary hover:opacity-90" asChild>
+                  <Link to="/register">Registrarse</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   User, 
   Briefcase, 
@@ -13,6 +14,10 @@ import {
   Calendar,
   DollarSign
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useMyServices } from "@/hooks/useServices";
+import { useFreelancerStats, useRecentActivity } from "@/hooks/useDashboard";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Dashboard de Freelancer - Panel de control para profesionales independientes
@@ -33,37 +38,82 @@ import {
  * @version 1.0.0
  */
 export function FreelancerDashboard() {
+  const { user } = useAuth();
+  const { data: servicesData, isLoading: servicesLoading } = useMyServices(0, 5);
+  const { data: stats, isLoading: statsLoading } = useFreelancerStats();
+  const { data: recentActivity, isLoading: activityLoading } = useRecentActivity();
+  
+  const services = servicesData?.content || [];
+  const totalElements = servicesData?.totalElements || 0;
+
+  // Usar estadísticas del backend o calcular desde servicios como fallback
+  const activeServices = stats?.activeServices || services.filter(service => service.isActive).length;
+  const totalViews = stats?.totalViews || services.reduce((sum, service) => sum + (service.viewsCount || 0), 0);
+  const totalOrders = stats?.totalOrders || services.reduce((sum, service) => sum + (service.ordersCount || 0), 0);
+  const averageRating = stats?.averageRating || (services.length > 0 
+    ? services.reduce((sum, service) => sum + service.rating, 0) / services.length 
+    : 0);
+
+  const getUserDisplayName = () => {
+    if (!user) return 'Usuario';
+    return user.email.split('@')[0];
+  };
+
+  if (servicesLoading || statsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-96" />
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Encabezado de bienvenida */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">¡Hola, Juan!</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            ¡Hola, {getUserDisplayName()}!
+          </h1>
           <p className="text-muted-foreground">Aquí tienes un resumen de tu actividad</p>
         </div>
-        <Button className="bg-gradient-primary hover:opacity-90 w-full sm:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          Crear Servicio
+        <Button className="bg-gradient-primary hover:opacity-90 w-full sm:w-auto" asChild>
+          <Link to="/services/create">
+            <Plus className="mr-2 h-4 w-4" />
+            Crear Servicio
+          </Link>
         </Button>
       </div>
 
       {/* Tarjetas de estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* 
-          Tarjeta de Servicios Activos
-          Card: Componente de tarjeta con sombra y bordes
-          CardHeader: Encabezado de la tarjeta con título e icono
-          CardContent: Contenido principal de la tarjeta
-        */}
+        {/* Tarjeta de Servicios Activos */}
         <Card className="border-border/50 shadow-elegant">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Servicios Activos</CardTitle>
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{activeServices}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-success">+1</span> desde el mes pasado
+              Total de {totalElements} servicios
             </p>
           </CardContent>
         </Card>
@@ -76,51 +126,46 @@ export function FreelancerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center">
-              4.8
-              {/* 
-                Renderizado de estrellas usando Array.map()
-                [...Array(5)]: Crea un array de 5 elementos
-                map((_, i) => ...): Itera sobre cada elemento, i es el índice
-              */}
+              {averageRating.toFixed(1)}
               <div className="flex ml-2">
                 {[...Array(5)].map((_, indice) => (
                   <Star 
                     key={indice} 
-                    className={`h-3 w-3 ${indice < 5 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                    className={`h-3 w-3 ${indice < Math.floor(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
                   />
                 ))}
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Basado en 12 reseñas
+              Promedio de servicios
             </p>
           </CardContent>
         </Card>
 
-        {/* Tarjeta de Trabajos Completados */}
+        {/* Tarjeta de Vistas */}
         <Card className="border-border/50 shadow-elegant">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trabajos Completados</CardTitle>
+            <CardTitle className="text-sm font-medium">Vistas Totales</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalViews}</div>
+            <p className="text-xs text-muted-foreground">
+              En todos tus servicios
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Tarjeta de Órdenes */}
+        <Card className="border-border/50 shadow-elegant">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Órdenes</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{totalOrders}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-success">+2</span> este mes
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Tarjeta de Ingresos */}
-        <Card className="border-border/50 shadow-elegant">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$1,200,000</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-success">+15%</span> vs mes anterior
+              Trabajos completados
             </p>
           </CardContent>
         </Card>
@@ -140,42 +185,48 @@ export function FreelancerDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* 
-              Array de servicios con estructura tipada
-              Cada servicio tiene: título, precio, vistas y estado
-            */}
-            {[
-              { titulo: "Diseño de Logo Profesional", precio: "$150,000", vistas: 45, estado: "Activo" },
-              { titulo: "Desarrollo Web React", precio: "$800,000", vistas: 23, estado: "Activo" },
-              { titulo: "Community Manager", precio: "$300,000", vistas: 67, estado: "Pausado" }
-            ].map((servicio, indice) => (
-              <div key={indice} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="space-y-1">
-                  <p className="font-medium">{servicio.titulo}</p>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                    <span className="flex items-center">
-                      <DollarSign className="mr-1 h-3 w-3" />
-                      {servicio.precio}
-                    </span>
-                    <span className="flex items-center">
-                      <Eye className="mr-1 h-3 w-3" />
-                      {servicio.vistas} vistas
-                    </span>
+            {services.length > 0 ? (
+              services.slice(0, 3).map((servicio) => (
+                <div key={servicio.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium">{servicio.title}</p>
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <span className="flex items-center">
+                        <DollarSign className="mr-1 h-3 w-3" />
+                        ${servicio.price.toLocaleString()}
+                      </span>
+                      <span className="flex items-center">
+                        <Eye className="mr-1 h-3 w-3" />
+                        {servicio.viewsCount} vistas
+                      </span>
+                    </div>
                   </div>
+                  <Badge variant={servicio.isActive ? "default" : "secondary"}>
+                    {servicio.isActive ? "Activo" : "Inactivo"}
+                  </Badge>
                 </div>
-                {/* 
-                  Badge con variante condicional
-                  Si el estado es "Activo", usa variante "default"
-                  Si no, usa variante "secondary"
-                */}
-                <Badge variant={servicio.estado === "Activo" ? "default" : "secondary"}>
-                  {servicio.estado}
-                </Badge>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Briefcase className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">No tienes servicios aún</p>
+                <p className="text-sm mb-4">Crea tu primer servicio para empezar a recibir clientes</p>
+                <Button asChild>
+                  <Link to="/services/create">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear mi primer servicio
+                  </Link>
+                </Button>
               </div>
-            ))}
-            <Button variant="outline" className="w-full">
-              Ver todos los servicios
-            </Button>
+            )}
+            
+            {services.length > 0 && (
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/services/my-services">
+                  Ver todos los servicios ({totalElements})
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -191,62 +242,48 @@ export function FreelancerDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* 
-              Array de actividades con estructura tipada
-              Cada actividad tiene: acción, cliente, proyecto, tiempo y tipo
-            */}
-            {[
-              { 
-                accion: "Nueva solicitud de trabajo", 
-                cliente: "María González", 
-                proyecto: "Diseño de logo",
-                tiempo: "Hace 2 horas",
-                tipo: "solicitud"
-              },
-              { 
-                accion: "Mensaje recibido", 
-                cliente: "Carlos Méndez", 
-                proyecto: "Desarrollo web",
-                tiempo: "Hace 5 horas",
-                tipo: "mensaje"
-              },
-              { 
-                accion: "Proyecto completado", 
-                cliente: "Ana López", 
-                proyecto: "Community manager",
-                tiempo: "Hace 1 día",
-                tipo: "completado"
-              }
-            ].map((actividad, indice) => (
-              <div key={indice} className="flex items-start space-x-3">
-                {/* 
-                  Icono con color condicional basado en el tipo de actividad
-                  Template literal: `texto ${variable} texto`
-                */}
-                <div className={`p-1 rounded-full ${
-                  actividad.tipo === "solicitud" ? "bg-blue-100 text-blue-600" :
-                  actividad.tipo === "mensaje" ? "bg-green-100 text-green-600" :
-                  "bg-purple-100 text-purple-600"
-                }`}>
-                  {/* 
-                    Renderizado condicional de iconos
-                    Operador ternario anidado para mostrar el icono correcto
-                  */}
-                  {actividad.tipo === "solicitud" ? <User className="h-3 w-3" /> :
-                   actividad.tipo === "mensaje" ? <MessageSquare className="h-3 w-3" /> :
-                   <Calendar className="h-3 w-3" />}
+            {activityLoading ? (
+              [...Array(3)].map((_, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <Skeleton className="w-6 h-6 rounded-full" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
                 </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium">{actividad.accion}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {actividad.cliente} - {actividad.proyecto}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{actividad.tiempo}</p>
+              ))
+            ) : (
+              recentActivity?.map((actividad) => (
+                <div key={actividad.id} className="flex items-start space-x-3">
+                  <div className={`p-1 rounded-full ${
+                    actividad.type === "order" ? "bg-blue-100 text-blue-600" :
+                    actividad.type === "message" ? "bg-green-100 text-green-600" :
+                    actividad.type === "review" ? "bg-purple-100 text-purple-600" :
+                    "bg-orange-100 text-orange-600"
+                  }`}>
+                    {actividad.type === "order" ? <User className="h-3 w-3" /> :
+                     actividad.type === "message" ? <MessageSquare className="h-3 w-3" /> :
+                     actividad.type === "review" ? <Star className="h-3 w-3" /> :
+                     <DollarSign className="h-3 w-3" />}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium">{actividad.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {actividad.description}
+                      {actividad.clientName && ` - ${actividad.clientName}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(actividad.timestamp).toLocaleString('es-CO')}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full">
-              Ver toda la actividad
+              )) || []
+            )}
+            <Button variant="outline" className="w-full" asChild>
+              <Link to="/notifications">
+                Ver toda la actividad
+              </Link>
             </Button>
           </CardContent>
         </Card>

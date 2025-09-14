@@ -1,9 +1,33 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Briefcase, Star, Flag, CheckCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import heroImage from "@/assets/hero-illustration.jpg";
 
 export function HeroSection() {
+  const { user, isAuthenticated } = useAuth();
+
+  const handleFreelancerClick = () => {
+    if (isAuthenticated) {
+      // Si está autenticado, ir al dashboard
+      window.location.href = '/dashboard';
+    } else {
+      // Si no está autenticado, ir al registro como freelancer
+      window.location.href = '/register?role=freelancer';
+    }
+  };
+
+  const handleContractorClick = () => {
+    if (isAuthenticated) {
+      // Si está autenticado, ir a explorar servicios
+      window.location.href = '/explore';
+    } else {
+      // Si no está autenticado, ir al registro como contratante
+      window.location.href = '/register?role=contractor';
+    }
+  };
+
   return (
     <section className="relative overflow-hidden bg-gradient-hero py-20 lg:py-32">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,12 +76,21 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12"
             >
-              <Button size="lg" className="bg-gradient-primary hover:opacity-90 shadow-camello-md">
-                Soy Freelancer
+              <Button 
+                size="lg" 
+                className="bg-gradient-primary hover:opacity-90 shadow-camello-md"
+                onClick={handleFreelancerClick}
+              >
+                {isAuthenticated ? 'Mi Dashboard' : 'Soy Freelancer'}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" className="shadow-camello-sm">
-                Necesito talento
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="shadow-camello-sm"
+                onClick={handleContractorClick}
+              >
+                {isAuthenticated ? 'Explorar Servicios' : 'Necesito talento'}
               </Button>
             </motion.div>
 

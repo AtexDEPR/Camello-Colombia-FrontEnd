@@ -2,14 +2,16 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useNavigate, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CamelloLogo } from "@/components/ui/camello-logo"
-import { Mail, Lock, ArrowLeft } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Mail, Lock, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "@/hooks/use-toast"
 
 /**
  * Página de Inicio de Sesión - Autenticación de usuarios en Camello
@@ -26,49 +28,87 @@ import { Link } from "react-router-dom"
  * @version 1.0.0
  */
 export default function PaginaInicioSesion() {
+  const navigate = useNavigate()
+  const { login, isAuthenticated, isLoading, error, clearError } = useAuth()
+
   /**
    * Estado del formulario de inicio de sesión
-   * 
-   * useState es un Hook de React que permite agregar estado a componentes funcionales.
-   * El primer elemento es el valor actual del estado, el segundo es una función para actualizarlo.
-   * 
-   * Tipos de TypeScript:
-   * - { email: string, password: string }: Define la estructura del objeto
-   * - useState<...>: Especifica el tipo del estado
    */
   const [datosFormulario, establecerDatosFormulario] = useState({
     email: "",
-    contraseña: "",
+    password: "",
   })
+
+  const [mostrarPassword, setMostrarPassword] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+
+  /**
+   * Redirigir si ya está autenticado
+   */
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
+    }
+  }, [isAuthenticated, navigate])
+
+  /**
+   * Limpiar errores cuando el usuario empiece a escribir
+   */
+  useEffect(() => {
+    if (error) {
+      clearError()
+    }
+  }, [datosFormulario.email, datosFormulario.password])
 
   /**
    * Manejador del envío del formulario
-   *
-   * Esta función se ejecuta cuando el usuario envía el formulario.
-   * Previene el comportamiento por defecto del navegador y procesa los datos.
-   * 
-   * @param evento - Evento del formulario (tipo React.FormEvent)
-   *
-   * TODO: Implementar lógica real de autenticación
-   * - Validar datos del formulario
-   * - Enviar petición al backend
-   * - Manejar respuesta (éxito/error)
-   * - Redirigir al dashboard si es exitoso
-   * - Mostrar errores si falla
    */
-  const manejarEnvio = (evento: React.FormEvent) => {
-    // Prevenir el comportamiento por defecto del formulario
+  const manejarEnvio = async (evento: React.FormEvent) => {
     evento.preventDefault()
+    
+    // Validaciones básicas
+    if (!datosFormulario.email || !datosFormulario.password) {
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor completa todos los campos",
+        variant: "destructive",
+      })
+      return
+    }
 
-    // Placeholder - reemplazar con lógica real
-    console.log("Intento de inicio de sesión:", datosFormulario)
+    if (!datosFormulario.email.includes('@')) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor ingresa un email válido",
+        variant: "destructive",
+      })
+      return
+    }
 
-    // Aquí iría la lógica de autenticación:
-    // 1. Validar campos
-    // 2. Enviar petición POST a /api/auth/login
-    // 3. Guardar token JWT en localStorage
-    // 4. Actualizar contexto de autenticación
-    // 5. Redirigir a dashboard
+    try {
+      setEnviando(true)
+      await login({
+        email: datosFormulario.email,
+        password: datosFormulario.password,
+      })
+      
+      // El redirect se maneja en el useEffect
+    } catch (error) {
+      // El error se maneja en el AuthContext
+      console.error('Error en login:', error)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  /**
+   * Manejar cambios en los inputs
+   */
+  const manejarCambio = (campo: string) => (evento: React.ChangeEvent<HTMLInputElement>) => {
+    establecerDatosFormulario(prev => ({
+      ...prev,
+      [campo]: evento.target.value
+    }))
   }
 
   return (
@@ -108,18 +148,15 @@ export default function PaginaInicioSesion() {
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
                 <div className="relative">
-                  {/* Icono dentro del input */}
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="tu@email.com"
-                    className="pl-10" // Padding left para el icono
+                    className="pl-10"
                     value={datosFormulario.email}
-                    onChange={(e) => establecerDatosFormulario({ 
-                      ...datosFormulario, 
-                      email: e.target.value 
-                    })}
+                    onChange={manejarCambio('email')}
+                    disabled={enviando || isLoading}
                     required
                   />
                 </div>
@@ -132,18 +169,30 @@ export default function PaginaInicioSesion() {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
-                    type="password"
+                    type={mostrarPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10"
-                    value={datosFormulario.contraseña}
-                    onChange={(e) => establecerDatosFormulario({ 
-                      ...datosFormulario, 
-                      contraseña: e.target.value 
-                    })}
+                    className="pl-10 pr-10"
+                    value={datosFormulario.password}
+                    onChange={manejarCambio('password')}
+                    disabled={enviando || isLoading}
                     required
                   />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
+                    onClick={() => setMostrarPassword(!mostrarPassword)}
+                  >
+                    {mostrarPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
+
+              {/* Mostrar error si existe */}
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error}
+                </div>
+              )}
 
               {/* Enlace de recuperación de contraseña */}
               <div className="flex items-center justify-between">
@@ -153,8 +202,19 @@ export default function PaginaInicioSesion() {
               </div>
 
               {/* Botón de envío */}
-              <Button type="submit" className="w-full">
-                Iniciar Sesión
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={enviando || isLoading}
+              >
+                {enviando || isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Iniciando sesión...
+                  </>
+                ) : (
+                  'Iniciar Sesión'
+                )}
               </Button>
             </form>
 

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { Header } from "@/components/Layout/Header";
 import { Footer } from "@/components/Layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useServicesWithLoading } from "@/hooks/useServices";
 import { 
   Search, 
   Filter, 
@@ -46,21 +49,21 @@ import {
  * @version 1.0.0
  */
 export default function PaginaExplorar() {
-  /**
-   * Estado para la consulta de búsqueda
-   * 
-   * Almacena el texto ingresado por el usuario en el campo de búsqueda.
-   * Se actualiza en tiempo real mientras el usuario escribe.
-   */
+  const [searchParams] = useSearchParams();
   const [consultaBusqueda, establecerConsultaBusqueda] = useState("");
-
-  /**
-   * Estado para la categoría seleccionada
-   * 
-   * Almacena la categoría actualmente seleccionada para filtrar los servicios.
-   * Por defecto es "all" (todas las categorías).
-   */
   const [categoriaSeleccionada, establecerCategoriaSeleccionada] = useState("all");
+  const [currentPage, setCurrentPage] = useState(0);
+  
+  // Obtener servicios del backend
+  const { services, isLoading, totalElements, hasNextPage } = useServicesWithLoading(currentPage, 12);
+
+  // Establecer categoría desde URL params
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl) {
+      establecerCategoriaSeleccionada(categoryFromUrl);
+    }
+  }, [searchParams]);
 
   /**
    * Array de categorías disponibles
@@ -78,141 +81,13 @@ export default function PaginaExplorar() {
     { id: "video", nombre: "Video", icono: Video },
   ];
 
-  /**
-   * Array de servicios disponibles
-   * 
-   * Cada servicio tiene una estructura completa con toda la información
-   * necesaria para mostrarlo en la interfaz.
-   * 
-   * Tipos de datos incluidos:
-   * - id: Identificador único
-   * - titulo: Nombre del servicio
-   * - freelancer: Nombre del profesional
-   * - calificacion: Puntuación (0-5)
-   * - numeroResenas: Cantidad de reseñas
-   * - precio: Precio del servicio
-   * - tiempoEntrega: Tiempo estimado de entrega
-   * - ubicacion: Ciudad del freelancer
-   * - imagen: URL de la imagen
-   * - categoria: Categoría del servicio
-   * - etiquetas: Array de etiquetas descriptivas
-   * - favorito: Estado de favorito (boolean)
-   * - vistas: Número de vistas del servicio
-   */
-  const servicios = [
-    {
-      id: 1,
-      titulo: "Desarrollo de Landing Page Profesional",
-      freelancer: "Carlos Rodríguez",
-      calificacion: 4.9,
-      numeroResenas: 28,
-      precio: "Desde $450,000",
-      tiempoEntrega: "3-5 días",
-      ubicacion: "Bogotá",
-      imagen: "/placeholder.svg",
-      categoria: "development",
-      etiquetas: ["React", "Responsive", "SEO"],
-      favorito: false,
-      vistas: 142
-    },
-    {
-      id: 2,
-      titulo: "Diseño de Logo e Identidad Corporativa",
-      freelancer: "Ana García",
-      calificacion: 4.8,
-      numeroResenas: 45,
-      precio: "Desde $250,000",
-      tiempoEntrega: "2-3 días",
-      ubicacion: "Medellín",
-      imagen: "/placeholder.svg",
-      categoria: "design",
-      etiquetas: ["Branding", "Vectorial", "Manual"],
-      favorito: true,
-      vistas: 89
-    },
-    {
-      id: 3,
-      titulo: "Gestión de Redes Sociales - Community Manager",
-      freelancer: "María López",
-      calificacion: 4.7,
-      numeroResenas: 32,
-      precio: "Desde $600,000/mes",
-      tiempoEntrega: "Inmediato",
-      ubicacion: "Cali",
-      imagen: "/placeholder.svg",
-      categoria: "marketing",
-      etiquetas: ["Instagram", "Facebook", "Contenido"],
-      favorito: false,
-      vistas: 203
-    },
-    {
-      id: 4,
-      titulo: "Fotografía Profesional para Productos",
-      freelancer: "Luis Mendoza",
-      calificacion: 4.9,
-      numeroResenas: 18,
-      precio: "Desde $180,000",
-      tiempoEntrega: "1-2 días",
-      ubicacion: "Barranquilla",
-      imagen: "/placeholder.svg",
-      categoria: "photography",
-      etiquetas: ["Estudio", "Productos", "E-commerce"],
-      favorito: false,
-      vistas: 67
-    },
-    {
-      id: 5,
-      titulo: "Redacción de Contenido SEO y Copywriting",
-      freelancer: "Sandra Torres",
-      calificacion: 4.6,
-      numeroResenas: 25,
-      precio: "Desde $120,000",
-      tiempoEntrega: "2-4 días",
-      ubicacion: "Bucaramanga",
-      imagen: "/placeholder.svg",
-      categoria: "writing",
-      etiquetas: ["SEO", "Blog", "Web"],
-      favorito: true,
-      vistas: 156
-    },
-    {
-      id: 6,
-      titulo: "Edición de Video Promocional",
-      freelancer: "Jorge Martínez",
-      calificacion: 4.8,
-      numeroResenas: 21,
-      precio: "Desde $350,000",
-      tiempoEntrega: "3-7 días",
-      ubicacion: "Cartagena",
-      imagen: "/placeholder.svg",
-      categoria: "video",
-      etiquetas: ["Promocional", "Motion Graphics", "Color"],
-      favorito: false,
-      vistas: 94
-    }
-  ];
-
-  /**
-   * Función para filtrar servicios según búsqueda y categoría
-   * 
-   * Esta función utiliza el método filter() de JavaScript para crear
-   * un nuevo array con solo los servicios que coinciden con los criterios.
-   * 
-   * Lógica de filtrado:
-   * - Búsqueda: Coincide con título o nombre del freelancer (case-insensitive)
-   * - Categoría: Coincide exactamente con la categoría seleccionada
-   * 
-   * @returns Array filtrado de servicios
-   */
-  const serviciosFiltrados = servicios.filter(servicio => {
-    // Verificar si el servicio coincide con la búsqueda
-    const coincideBusqueda = servicio.titulo.toLowerCase().includes(consultaBusqueda.toLowerCase()) ||
-                             servicio.freelancer.toLowerCase().includes(consultaBusqueda.toLowerCase());
+  // Filtrar servicios del backend
+  const serviciosFiltrados = services.filter(servicio => {
+    const coincideBusqueda = servicio.title.toLowerCase().includes(consultaBusqueda.toLowerCase()) ||
+                             servicio.freelancerName?.toLowerCase().includes(consultaBusqueda.toLowerCase());
     
-    // Verificar si el servicio coincide con la categoría
-    const coincideCategoria = categoriaSeleccionada === "all" || servicio.categoria === categoriaSeleccionada;
+    const coincideCategoria = categoriaSeleccionada === "all" || servicio.category === categoriaSeleccionada;
     
-    // Retornar true solo si coincide con ambos criterios
     return coincideBusqueda && coincideCategoria;
   });
 
@@ -303,7 +178,7 @@ export default function PaginaExplorar() {
         {/* Resultados */}
         <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <p className="text-muted-foreground">
-            {serviciosFiltrados.length} servicios encontrados
+            {isLoading ? 'Cargando...' : `${serviciosFiltrados.length} servicios encontrados`}
           </p>
           <Select defaultValue="recommended">
             <SelectTrigger className="w-full sm:w-48">
@@ -321,88 +196,140 @@ export default function PaginaExplorar() {
 
         {/* Grid de servicios */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {serviciosFiltrados.map((servicio) => (
-            <Card key={servicio.id} className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border/50">
-              {/* Imagen del servicio */}
-              <div className="relative">
-                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
-                  <img 
-                    src={servicio.imagen} 
-                    alt={servicio.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+          {isLoading ? (
+            // Skeleton loading
+            [...Array(6)].map((_, index) => (
+              <Card key={index} className="border-border/50">
+                <div className="aspect-video bg-muted rounded-t-lg">
+                  <Skeleton className="w-full h-full" />
                 </div>
-                {/* Botón de favorito */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background"
-                >
-                  <Heart className={`h-4 w-4 ${servicio.favorito ? 'fill-red-500 text-red-500' : ''}`} />
-                </Button>
-              </div>
-              
-              {/* Encabezado de la tarjeta */}
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
-                  {servicio.titulo}
-                </CardTitle>
-                <CardDescription className="flex items-center justify-between">
-                  <span className="flex items-center">
-                    <MapPin className="mr-1 h-3 w-3" />
-                    {servicio.freelancer} • {servicio.ubicacion}
-                  </span>
-                </CardDescription>
-              </CardHeader>
-              
-              {/* Contenido de la tarjeta */}
-              <CardContent className="space-y-3">
-                {/* Calificación y vistas */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{servicio.calificacion}</span>
-                    <span className="text-muted-foreground text-sm">({servicio.numeroResenas})</span>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-16" />
                   </div>
-                  <div className="flex items-center text-muted-foreground text-sm">
-                    <Eye className="mr-1 h-3 w-3" />
-                    {servicio.vistas}
+                  <div className="flex gap-1">
+                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-5 w-10" />
                   </div>
-                </div>
-
-                {/* Etiquetas */}
-                <div className="flex flex-wrap gap-1">
-                  {servicio.etiquetas.map((etiqueta, indice) => (
-                    <Badge key={indice} variant="secondary" className="text-xs">
-                      {etiqueta}
-                    </Badge>
-                  ))}
-                </div>
-
-                {/* Precio y botón de acción */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 border-t gap-2">
-                  <div>
-                    <p className="font-semibold text-primary">{servicio.precio}</p>
-                    <p className="text-sm text-muted-foreground flex items-center">
-                      <Clock className="mr-1 h-3 w-3" />
-                      {servicio.tiempoEntrega}
-                    </p>
+                  <div className="flex justify-between pt-2 border-t">
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-8 w-20" />
                   </div>
-                  <Button size="sm" className="bg-gradient-primary hover:opacity-90 w-full sm:w-auto">
-                    Ver Servicio
+                </CardContent>
+              </Card>
+            ))
+          ) : serviciosFiltrados.length > 0 ? (
+            serviciosFiltrados.map((servicio) => (
+              <Card key={servicio.id} className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border/50">
+                {/* Imagen del servicio */}
+                <div className="relative">
+                  <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+                    <img 
+                      src={servicio.imageUrl || "/placeholder.svg"} 
+                      alt={servicio.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  {/* Botón de favorito */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+                  >
+                    <Heart className="h-4 w-4" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                
+                {/* Encabezado de la tarjeta */}
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                    {servicio.title}
+                  </CardTitle>
+                  <CardDescription className="flex items-center justify-between">
+                    <span className="flex items-center">
+                      <MapPin className="mr-1 h-3 w-3" />
+                      {servicio.freelancerName || 'Freelancer'} • {servicio.location || 'Colombia'}
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                
+                {/* Contenido de la tarjeta */}
+                <CardContent className="space-y-3">
+                  {/* Calificación y vistas */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium">{servicio.rating.toFixed(1)}</span>
+                      <span className="text-muted-foreground text-sm">({servicio.reviewsCount || 0})</span>
+                    </div>
+                    <div className="flex items-center text-muted-foreground text-sm">
+                      <Eye className="mr-1 h-3 w-3" />
+                      {servicio.viewsCount || 0}
+                    </div>
+                  </div>
+
+                  {/* Etiquetas */}
+                  <div className="flex flex-wrap gap-1">
+                    {servicio.tags?.slice(0, 3).map((etiqueta, indice) => (
+                      <Badge key={indice} variant="secondary" className="text-xs">
+                        {etiqueta}
+                      </Badge>
+                    )) || (
+                      <Badge variant="secondary" className="text-xs">
+                        {servicio.category}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Precio y botón de acción */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 border-t gap-2">
+                    <div>
+                      <p className="font-semibold text-primary">
+                        ${servicio.price.toLocaleString('es-CO')}
+                      </p>
+                      <p className="text-sm text-muted-foreground flex items-center">
+                        <Clock className="mr-1 h-3 w-3" />
+                        {servicio.deliveryTime || '3-5 días'}
+                      </p>
+                    </div>
+                    <Button size="sm" className="bg-gradient-primary hover:opacity-90 w-full sm:w-auto" asChild>
+                      <Link to={`/services/${servicio.id}`}>
+                        Ver Servicio
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <div className="text-muted-foreground">
+                <Search className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">No se encontraron servicios</h3>
+                <p>Intenta ajustar tus filtros de búsqueda</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Cargar más */}
-        <div className="text-center mt-12">
-          <Button variant="outline" size="lg">
-            Cargar más servicios
-          </Button>
-        </div>
+        {hasNextPage && !isLoading && (
+          <div className="text-center mt-12">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => setCurrentPage(prev => prev + 1)}
+            >
+              Cargar más servicios
+            </Button>
+          </div>
+        )}
       </main>
 
       {/* 

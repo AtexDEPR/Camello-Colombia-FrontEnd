@@ -3,6 +3,7 @@ import { Footer } from "@/components/Layout/Footer"
 import { HeroSection } from "@/components/Hero/HeroSection"
 import { FeaturesSection } from "@/components/Features/FeaturesSection"
 import { CategoriesSection } from "@/components/Categories/CategoriesSection"
+import { FeaturedServices } from "@/components/Services/FeaturedServices"
 import { CTASection } from "@/components/CTA/CTASection"
 
 /**
@@ -45,6 +46,9 @@ const Index = () => {
 
         {/* Sección de categorías - Servicios disponibles */}
         <CategoriesSection />
+
+        {/* Sección de servicios destacados */}
+        <FeaturedServices />
 
         {/* Sección CTA - Llamada final a la acción */}
         <CTASection />
