@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -98,8 +98,7 @@ export function FeaturedServices() {
         </div>
 
         {/* Tarjetas de planes */}
-        <TooltipProvider>
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
             {plans.map((plan) => (
               <Card
                 key={plan.id}
@@ -181,7 +180,6 @@ export function FeaturedServices() {
               </Card>
             ))}
           </div>
-        </TooltipProvider>
 
         {/* Comparación clara entre planes */}
         <Tabs defaultValue="features">

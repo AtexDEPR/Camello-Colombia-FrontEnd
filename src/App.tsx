@@ -72,7 +72,7 @@ const App = () => (
     {/* Proveedor de autenticación para toda la aplicación */}
     <AuthProvider>
       {/* Proveedor de tooltips para toda la aplicación */}
-      <TooltipProvider>
+      <TooltipProvider delayDuration={0}>
         {/* Sistemas de notificaciones */}
         <Toaster />
         <Sonner />
