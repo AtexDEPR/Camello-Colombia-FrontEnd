@@ -11,16 +11,10 @@ class HealthService {
    * Verificar si el backend está disponible
    */
   async checkHealth(): Promise<boolean> {
+    if (import.meta.env.VITE_MOCK_API === 'true') return true
     try {
-      // Intentar endpoint público primero
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/public/health`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      return response.ok
+      const response = await api.get('/public/health')
+      return response.status === 200
     } catch (error) {
       console.error('Health check failed:', error)
       return false

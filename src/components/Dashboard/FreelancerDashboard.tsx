@@ -42,6 +42,8 @@ export function FreelancerDashboard() {
   const { data: servicesData, isLoading: servicesLoading } = useMyServices(0, 5);
   const { data: stats, isLoading: statsLoading } = useFreelancerStats();
   const { data: recentActivity, isLoading: activityLoading } = useRecentActivity();
+  // Asegurar que recentActivity sea un array válido antes de mapear
+  const activities = Array.isArray(recentActivity) ? recentActivity : [];
   
   const services = servicesData?.content || [];
   const totalElements = servicesData?.totalElements || 0;
@@ -254,7 +256,7 @@ export function FreelancerDashboard() {
                 </div>
               ))
             ) : (
-              recentActivity?.map((actividad) => (
+              activities.map((actividad) => (
                 <div key={actividad.id} className="flex items-start space-x-3">
                   <div className={`p-1 rounded-full ${
                     actividad.type === "order" ? "bg-blue-100 text-blue-600" :

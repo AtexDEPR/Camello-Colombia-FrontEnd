@@ -171,6 +171,26 @@ El sistema incluye logging automático cuando `VITE_DEBUG_MODE=true`:
 - Network tab para API calls
 - Console logs estructurados
 
+## 📄 Detalle de Servicios (Explorar / ServiceDetail)
+
+- Fuente de datos:
+  - `src/mocks/data.ts` define dos estructuras:
+    - `services`: lista resumida usada en tarjetas y listados.
+    - `serviceDetails`: contenido ampliado por `id` para la página de detalle.
+- Renderizado:
+  - `src/pages/ServiceDetail.tsx` construye un ViewModel combinando `serviceDetails[id]` con el resumen de `services`.
+  - Si no existe `serviceDetails[id]`, usa el resumen y muestra mensajes de placeholder en secciones detalladas.
+- Validaciones:
+  - Se loguea `console.warn` cuando falta detalle para un `id`.
+  - Se evita cualquier fallback a otro servicio (antes: `srv-3`), previniendo contenidos incorrectos.
+- Cómo añadir un nuevo detalle:
+  1) Agrega el servicio en `services` con `id`, `title`, `description`, `tags`, `price`, etc.
+  2) Crea la entrada correspondiente en `serviceDetails[id]` con `benefits`, `processSteps`, `requirements`, `caseStudies`, `testimonials` y `freelancer`.
+  3) Verifica en `ServiceDetail` que se rendericen las secciones sin warnings.
+- Pruebas:
+  - Abre `/service/:id` para cada servicio (2–10) y confirma que título, descripción y secciones coinciden.
+  - Usa el filtro por categoría en `Explore` para navegar a cada detalle.
+
 ## 📝 Convenciones de Código
 
 ### **Nomenclatura**

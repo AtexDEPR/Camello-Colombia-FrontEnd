@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ReviewSystem } from "@/components/Reviews/ReviewSystem";
 import { Star, Clock, MapPin, Calendar, MessageCircle, Heart, Share2, Eye } from "lucide-react";
+import { serviceDetails, services } from "@/mocks/data";
 
 /**
  * Página de Detalle de Servicio - Visualización completa de un servicio
@@ -33,58 +34,50 @@ export default function ServiceDetail() {
   // Estado para controlar si el servicio está en favoritos
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // TODO: Reemplazar con llamada a API para obtener detalles del servicio por ID
-  // Datos de ejemplo para el servicio
-  const mockService = {
-    id: id || "1",
-    title: "Desarrollo de Landing Page Profesional",
-    description: "Diseño y desarrollo de landing pages profesionales optimizadas para conversión. Incluye diseño responsive, optimización SEO básica, y hasta 3 secciones personalizadas. Entrega en HTML/CSS/JS o implementación en WordPress según necesidad.",
-    price: "450,000",
-    deliveryTime: "3-5 días",
-    category: "Desarrollo",
-    tags: ["React", "Responsive", "SEO"],
-    rating: 4.9,
-    reviews: 28,
-    views: 142,
-    images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-    freelancer: {
-      id: "f1",
-      name: "Carlos Rodríguez",
-      avatar: "/placeholder.svg",
-      location: "Bogotá",
-      rating: 4.8,
-      totalReviews: 42,
-      memberSince: "Enero 2023",
-      responseTime: "2 horas",
-      verified: true
+  // Construcción del detalle a partir de mocks enriquecidos
+  const selectedId = id || 'srv-3'
+  const detail = serviceDetails[selectedId]
+  const summary = services.find(s => s.id === selectedId) || (services[0] as any)
+
+  // ViewModel para la página combinando detalle y resumen
+  const vm = {
+    id: selectedId,
+    title: detail?.title || summary?.title || 'Servicio',
+    description: detail?.description || summary?.description || '',
+    price: (summary?.price || 0).toLocaleString('es-CO'),
+    deliveryTime: detail?.deliveryTime || summary?.deliveryTime || '5-7 días',
+    category: summary?.categoryName || 'Servicio',
+    tags: detail?.tags || summary?.tags || [],
+    rating: summary?.rating || detail?.freelancer?.rating || 4.8,
+    reviews: detail?.freelancer?.totalReviews || 0,
+    views: summary?.viewsCount || 0,
+    images: detail?.images || summary?.images || ["/placeholder.svg"],
+    freelancer: detail?.freelancer || {
+      id: 'f1',
+      name: summary?.freelancerName || 'Freelancer',
+      avatar: summary?.freelancerProfilePicture || '/placeholder.svg',
+      location: (summary as any)?.location || 'Colombia',
+      rating: summary?.rating || 4.7,
+      totalReviews: detail?.freelancer?.totalReviews || 0,
+      memberSince: '2023',
+      responseTime: '2 horas',
+      verified: true,
     },
-    features: [
-      "Diseño 100% responsive",
-      "Optimización para SEO",
-      "Hasta 3 revisiones incluidas",
-      "Código fuente incluido",
-      "Soporte post-entrega (7 días)"
-    ],
-    faq: [
-      {
-        question: "¿Qué información necesitas para comenzar?",
-        answer: "Necesito tu brief con objetivos, referencias de diseño que te gusten, textos y logos/imágenes que quieras incluir."
-      },
-      {
-        question: "¿Puedo solicitar cambios después de la entrega?",
-        answer: "Sí, incluyo hasta 3 rondas de revisiones sin costo adicional. Cambios mayores pueden requerir un presupuesto adicional."
-      },
-      {
-        question: "¿Incluye hosting o dominio?",
-        answer: "No, el servicio incluye solo el desarrollo. Puedo asesorarte sobre opciones de hosting si lo necesitas."
-      }
-    ]
-  };
+    benefits: detail?.benefits || [],
+    processSteps: detail?.processSteps || [],
+    requirements: detail?.requirements || [],
+    caseStudies: detail?.caseStudies || [],
+    testimonials: detail?.testimonials || [],
+  }
+
+  if (!detail) {
+    console.warn(`[ServiceDetail] No hay contenido detallado para ${selectedId}. Usando resumen del servicio.`)
+  }
 
   // Función para manejar la contratación del servicio
   const handleHire = () => {
     // TODO: Implementar lógica de contratación
-    console.log("Contratando servicio:", mockService.id);
+    console.log("Contratando servicio:", vm.id);
     // Aquí iría la lógica para iniciar el proceso de contratación
     // 1. Verificar si el usuario está autenticado
     // 2. Crear solicitud de contratación
@@ -95,7 +88,7 @@ export default function ServiceDetail() {
   const handleToggleFavorite = () => {
     // TODO: Implementar lógica de favoritos con API
     setIsFavorite(!isFavorite);
-    console.log(isFavorite ? "Removido de favoritos" : "Agregado a favoritos", mockService.id);
+    console.log(isFavorite ? "Removido de favoritos" : "Agregado a favoritos", vm.id);
   };
 
   return (
@@ -105,7 +98,7 @@ export default function ServiceDetail() {
       <main className="container mx-auto px-4 py-8">
         {/* Navegación de migas de pan */}
         <div className="text-sm text-muted-foreground mb-4">
-          <span>Inicio</span> &gt; <span>Servicios</span> &gt; <span>{mockService.category}</span> &gt; <span className="text-foreground">{mockService.title}</span>
+          <span>Inicio</span> &gt; <span>Servicios</span> &gt; <span>{vm.category}</span> &gt; <span className="text-foreground">{vm.title}</span>
         </div>
         
         {/* Contenedor principal */}
@@ -114,20 +107,20 @@ export default function ServiceDetail() {
           <div className="lg:col-span-2 space-y-8">
             {/* Título y acciones */}
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{mockService.title}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{vm.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <div className="flex items-center">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                  <span className="font-medium">{mockService.rating}</span>
-                  <span className="text-muted-foreground ml-1">({mockService.reviews} reseñas)</span>
+                  <span className="font-medium">{vm.rating}</span>
+                  <span className="text-muted-foreground ml-1">({vm.reviews} reseñas)</span>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <Eye className="h-4 w-4 mr-1" />
-                  <span>{mockService.views} vistas</span>
+                  <span>{vm.views} vistas</span>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <MapPin className="h-4 w-4 mr-1" />
-                  <span>{mockService.freelancer.location}</span>
+                  <span>{vm.freelancer.location}</span>
                 </div>
               </div>
             </div>
@@ -136,17 +129,17 @@ export default function ServiceDetail() {
             <div className="space-y-4">
               <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                 <img 
-                  src={mockService.images[0]} 
-                  alt={mockService.title}
+                  src={vm.images[0]} 
+                  alt={vm.title}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {mockService.images.slice(1).map((image, index) => (
+                {vm.images.slice(1).map((image, index) => (
                   <div key={index} className="aspect-video bg-muted rounded-lg overflow-hidden">
                     <img 
                       src={image} 
-                      alt={`${mockService.title} - imagen ${index + 2}`}
+                      alt={`${vm.title} - imagen ${index + 2}`}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -156,49 +149,104 @@ export default function ServiceDetail() {
             
             {/* Pestañas de información */}
             <Tabs defaultValue="description" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-6 sm:grid-cols-6">
                 <TabsTrigger value="description">Descripción</TabsTrigger>
-                <TabsTrigger value="features">Características</TabsTrigger>
-                <TabsTrigger value="faq">Preguntas Frecuentes</TabsTrigger>
+                <TabsTrigger value="benefits">Beneficios</TabsTrigger>
+                <TabsTrigger value="process">Proceso</TabsTrigger>
+                <TabsTrigger value="requirements">Requisitos</TabsTrigger>
+                <TabsTrigger value="cases">Casos de éxito</TabsTrigger>
+                <TabsTrigger value="testimonials">Testimonios</TabsTrigger>
               </TabsList>
               
               {/* Pestaña de descripción */}
               <TabsContent value="description" className="space-y-4 pt-4">
                 <div className="prose max-w-none">
-                  <p className="text-foreground">{mockService.description}</p>
+                  <p className="text-foreground">{vm.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
-                  {mockService.tags.map((tag, index) => (
+                  {vm.tags.map((tag, index) => (
                     <Badge key={index} variant="secondary">{tag}</Badge>
                   ))}
                 </div>
               </TabsContent>
               
-              {/* Pestaña de características */}
-              <TabsContent value="features" className="space-y-4 pt-4">
-                <ul className="space-y-2">
-                  {mockService.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <div className="mr-2 mt-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
-                        <div className="h-2 w-2 rounded-full bg-primary-foreground"></div>
-                      </div>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+              {/* Pestaña de beneficios */}
+              <TabsContent value="benefits" className="space-y-4 pt-4">
+                {vm.benefits.length ? (
+                  <ul className="space-y-2">
+                    {vm.benefits.map((benefit, index) => (
+                      <li key={index} className="flex items-start">
+                        <div className="mr-2 mt-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
+                          <div className="h-2 w-2 rounded-full bg-primary-foreground"></div>
+                        </div>
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground">Información detallada en preparación.</p>
+                )}
               </TabsContent>
-              
-              {/* Pestaña de FAQ */}
-              <TabsContent value="faq" className="space-y-4 pt-4">
-                <div className="space-y-4">
-                  {mockService.faq.map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <h3 className="font-medium">{item.question}</h3>
-                      <p className="text-muted-foreground">{item.answer}</p>
-                      {index < mockService.faq.length - 1 && <Separator />}
-                    </div>
-                  ))}
-                </div>
+
+              {/* Pestaña de proceso */}
+              <TabsContent value="process" className="space-y-4 pt-4">
+                {vm.processSteps.length ? (
+                  <ol className="space-y-3 list-decimal pl-5">
+                    {vm.processSteps.map((step, index) => (
+                      <li key={index} className="text-foreground">{step}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-muted-foreground">Proceso estándar: Brief, Propuesta, Implementación, Revisión y Entrega.</p>
+                )}
+              </TabsContent>
+
+              {/* Pestaña de requisitos */}
+              <TabsContent value="requirements" className="space-y-4 pt-4">
+                {vm.requirements?.length ? (
+                  <ul className="space-y-2">
+                    {vm.requirements.map((req, index) => (
+                      <li key={index} className="flex items-start">
+                        <div className="mr-2 mt-1 h-4 w-4 rounded-full bg-muted" />
+                        <span>{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground">No se requieren insumos previos.</p>
+                )}
+              </TabsContent>
+
+              {/* Pestaña de casos de éxito */}
+              <TabsContent value="cases" className="space-y-4 pt-4">
+                {vm.caseStudies?.length ? (
+                  <div className="space-y-3">
+                    {vm.caseStudies.map((cs, index) => (
+                      <div key={index} className="p-4 border rounded-md">
+                        <h3 className="font-medium">{cs.title}</h3>
+                        <p className="text-muted-foreground">{cs.result}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Aún no hay casos publicados.</p>
+                )}
+              </TabsContent>
+
+              {/* Pestaña de testimonios */}
+              <TabsContent value="testimonials" className="space-y-4 pt-4">
+                {vm.testimonials?.length ? (
+                  <div className="space-y-3">
+                    {vm.testimonials.map((t, index) => (
+                      <div key={index} className="p-4 border rounded-md">
+                        <p className="italic">“{t.quote}”</p>
+                        <p className="text-sm text-muted-foreground mt-1">— {t.client}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Aún no hay testimonios disponibles.</p>
+                )}
               </TabsContent>
             </Tabs>
             
@@ -222,13 +270,13 @@ export default function ServiceDetail() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Precio</span>
-                    <span className="text-2xl font-bold text-primary">$ {mockService.price}</span>
+                    <span className="text-2xl font-bold text-primary">$ {vm.price}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Tiempo de entrega</span>
                     <div className="flex items-center">
                       <Clock className="mr-1 h-4 w-4 text-muted-foreground" />
-                      <span>{mockService.deliveryTime}</span>
+                      <span>{vm.deliveryTime}</span>
                     </div>
                   </div>
                 </div>
@@ -263,13 +311,13 @@ export default function ServiceDetail() {
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={mockService.freelancer.avatar} alt={mockService.freelancer.name} />
-                      <AvatarFallback>{mockService.freelancer.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={vm.freelancer.avatar} alt={vm.freelancer.name} />
+                      <AvatarFallback>{vm.freelancer.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="flex items-center">
-                        <span className="font-medium">{mockService.freelancer.name}</span>
-                        {mockService.freelancer.verified && (
+                        <span className="font-medium">{vm.freelancer.name}</span>
+                        {vm.freelancer.verified && (
                           <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">
                             Verificado
                           </Badge>
@@ -277,9 +325,9 @@ export default function ServiceDetail() {
                       </div>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Star className="mr-1 h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span>{mockService.freelancer.rating}</span>
+                        <span>{vm.freelancer.rating}</span>
                         <span className="mx-1">•</span>
-                        <span>{mockService.freelancer.totalReviews} reseñas</span>
+                        <span>{vm.freelancer.totalReviews} reseñas</span>
                       </div>
                     </div>
                   </div>
@@ -289,14 +337,14 @@ export default function ServiceDetail() {
                       <span className="text-muted-foreground">Miembro desde</span>
                       <div className="flex items-center">
                         <Calendar className="mr-1 h-3 w-3" />
-                        <span>{mockService.freelancer.memberSince}</span>
+                        <span>{vm.freelancer.memberSince}</span>
                       </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Tiempo de respuesta</span>
                       <div className="flex items-center">
                         <Clock className="mr-1 h-3 w-3" />
-                        <span>{mockService.freelancer.responseTime}</span>
+                        <span>{vm.freelancer.responseTime}</span>
                       </div>
                     </div>
                   </div>

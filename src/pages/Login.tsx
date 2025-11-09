@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { CamelloLogo } from "@/components/ui/camello-logo"
 import { Mail, Lock, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { UserRole } from "@/types/api"
 import { toast } from "@/hooks/use-toast"
 
 /**
@@ -29,7 +30,7 @@ import { toast } from "@/hooks/use-toast"
  */
 export default function PaginaInicioSesion() {
   const navigate = useNavigate()
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuth()
+  const { login, isAuthenticated, isLoading, error, clearError, user } = useAuth()
 
   /**
    * Estado del formulario de inicio de sesión
@@ -47,9 +48,13 @@ export default function PaginaInicioSesion() {
    */
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard')
+      if (user?.role === UserRole.ADMIN) {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, user])
 
   /**
    * Limpiar errores cuando el usuario empiece a escribir

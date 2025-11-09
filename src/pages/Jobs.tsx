@@ -20,7 +20,9 @@ import {
   Camera,
   Megaphone,
   PenTool,
-  Video
+  Video,
+  Headphones,
+  Globe
 } from "lucide-react";
 
 /**
@@ -78,6 +80,9 @@ export default function PaginaTrabajos() {
     { id: "marketing", nombre: "Marketing", icono: Megaphone },
     { id: "writing", nombre: "Redacción", icono: PenTool },
     { id: "video", nombre: "Video", icono: Video },
+    { id: "audio", nombre: "Audio", icono: Headphones },
+    { id: "consulting", nombre: "Consultoría", icono: Briefcase },
+    { id: "translation", nombre: "Traducción", icono: Globe },
   ];
 
   /**

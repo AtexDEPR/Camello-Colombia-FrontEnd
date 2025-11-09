@@ -22,7 +22,10 @@ import {
   Camera,
   Megaphone,
   PenTool,
-  Video
+  Video,
+  Headphones,
+  Globe,
+  Briefcase
 } from "lucide-react";
 
 /**
@@ -79,6 +82,9 @@ export default function PaginaExplorar() {
     { id: "marketing", nombre: "Marketing", icono: Megaphone },
     { id: "writing", nombre: "Redacción", icono: PenTool },
     { id: "video", nombre: "Video", icono: Video },
+    { id: "audio", nombre: "Audio", icono: Headphones },
+    { id: "consulting", nombre: "Consultoría", icono: Briefcase },
+    { id: "translation", nombre: "Traducción", icono: Globe },
   ];
 
   // Filtrar servicios del backend

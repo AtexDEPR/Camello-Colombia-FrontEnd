@@ -1,7 +1,10 @@
 import { Header } from "@/components/Layout/Header";
 import { FreelancerDashboard } from "@/components/Dashboard/FreelancerDashboard";
 import { ContractorDashboard } from "@/components/Dashboard/ContractorDashboard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useAuth, useRole } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
+import { UserRole } from "@/types/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -48,8 +51,19 @@ export default function PaginaDashboard() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        {isFreelancer && <FreelancerDashboard />}
-        {isContractor && <ContractorDashboard />}
+        {user?.role === UserRole.ADMIN && (
+          <Navigate to="/admin" replace />
+        )}
+        {isFreelancer && (
+          <ErrorBoundary>
+            <FreelancerDashboard />
+          </ErrorBoundary>
+        )}
+        {isContractor && (
+          <ErrorBoundary>
+            <ContractorDashboard />
+          </ErrorBoundary>
+        )}
         {!isFreelancer && !isContractor && (
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold mb-4">Completa tu perfil</h2>

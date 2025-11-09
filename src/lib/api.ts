@@ -6,6 +6,7 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
+import mockApi from './mockApi'
 
 // Configuración base de la API
 const API_CONFIG = {
@@ -21,8 +22,12 @@ const API_CONFIG = {
 // Crear instancia de Axios
 const apiClient: AxiosInstance = axios.create(API_CONFIG)
 
+// Determinar si usamos mock
+const USE_MOCK = import.meta.env.VITE_MOCK_API === 'true'
+
 // Interceptor de Request - Agregar token de autenticación
-apiClient.interceptors.request.use(
+if (!USE_MOCK) {
+  apiClient.interceptors.request.use(
   (config: AxiosRequestConfig) => {
     // Obtener token del localStorage
     const token = localStorage.getItem('camello-token')
@@ -46,10 +51,10 @@ apiClient.interceptors.request.use(
     console.error('❌ Request Error:', error)
     return Promise.reject(error)
   }
-)
+  )
 
 // Interceptor de Response - Manejo de respuestas y errores
-apiClient.interceptors.response.use(
+  apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     // Log de responses exitosas en desarrollo
     if (import.meta.env.VITE_DEBUG_MODE === 'true') {
@@ -104,7 +109,8 @@ apiClient.interceptors.response.use(
 
     return Promise.reject(error)
   }
-)
+  )
+}
 
 // Tipos para las respuestas de la API
 export interface ApiResponse<T = any> {
@@ -124,26 +130,17 @@ export interface PaginatedResponse<T = any> {
 }
 
 // Funciones helper para requests comunes
-export const api = {
-  // GET request
+export const api = USE_MOCK ? mockApi : {
   get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
     apiClient.get(url, config),
-
-  // POST request
   post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
     apiClient.post(url, data, config),
-
-  // PUT request
   put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
     apiClient.put(url, data, config),
-
-  // PATCH request
   patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
     apiClient.patch(url, data, config),
-
-  // DELETE request
   delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
     apiClient.delete(url, config),
 }
 
-export default apiClient
+export default USE_MOCK ? (mockApi as any) : apiClient
