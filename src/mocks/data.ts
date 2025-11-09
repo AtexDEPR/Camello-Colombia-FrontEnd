@@ -35,7 +35,7 @@ export const categories: Category[] = [
   { id: 'cat-video', name: 'Video', description: 'Edición, animación', active: true },
 ]
 
-// Servicios detallados y no genéricos para la lista de Explore
+// Servicios detallados y no genéricos para la lista de Exploree
 export const services: Service[] = [
   {
     id: 'srv-1',
